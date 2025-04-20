@@ -177,17 +177,45 @@ async function execute(action) {
             const response = await fetch(action.file);
             const template = document.createElement('template');
             template.innerHTML = await response.text();
-            const scripts = template.content.querySelectorAll('script');
-            for (const src of scripts) {
-                src.remove();
-                const newsrc = document.createElement('script');
-                if (src.hasAttribute('src')) {
-                    newsrc.src = src.src;
+            // Load JS scripts
+            let semaphore = 0;
+            function loader() {
+                semaphore--;
+                if (semaphore == 0) {
+                    if (typeof window['main'] !== 'function') {
+                        console.log('main() not defined!');
+                        return;
+                    }
+                    // Bind main() to a new global function
+                    const func = window.main;
+                    window.main = 0;
+                    const funcHandler = `f${parseInt(Math.random() * 1e6)}`;
+                    window[funcHandler] = () => { func(newWindow); };
+                    const trigger = document.createElement('script');
+                    trigger.innerHTML = `${funcHandler}();`;
+                    newWindow.appendChild(trigger);
                 }
-                newsrc.innerHTML = src.innerHTML;
-                template.content.appendChild(newsrc);
+            }
+            let hasInline = false;
+            for (const script of template.content.querySelectorAll('script')) {
+                script.remove();
+                const scriptNew = document.createElement('script');
+                if (script.hasAttribute('src')) {
+                    scriptNew.src = script.src;
+                    scriptNew.addEventListener('load', loader);
+                    semaphore++;
+                } else {
+                    scriptNew.innerHTML = script.innerHTML;
+                    hasInline = true;
+                }
+                template.content.appendChild(scriptNew);
             }
             newContent.appendChild(template.content);
+            // Trigger inline scripts, if exist
+            if (hasInline) {
+                semaphore++;
+                loader();
+            }
             break;
         }
         case 'md': {
@@ -217,22 +245,6 @@ async function execute(action) {
             iframe.setAttribute('src', action.file);
             iframe.setAttribute('scrolling', 'no');
             newContent.appendChild(iframe);
-            break;
-        }
-        case 'js': {
-            // JS script inject
-            const script = document.createElement('script');
-            script.setAttribute('src', action.file);
-            script.addEventListener('load', () => {
-                // Bind main() to a new global function
-                const funcHandler = `f${parseInt(Math.random() * 1e6)}`;
-                window[funcHandler] = window['main'].bind(newWindow);
-                window['main'] = 0;
-                const loader = document.createElement('script');
-                loader.innerHTML = `${funcHandler}();`;
-                newWindow.appendChild(loader);
-            });
-            newWindow.appendChild(script);
             break;
         }
         default:
