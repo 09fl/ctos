@@ -31,7 +31,7 @@ ACTION_TABLE = {
     '.js': {
         'type': 'js',
         'icon': 'exe',
-        'style': 'hidden'
+        'style': 'medium'
     },
 }
 output = {
@@ -70,12 +70,14 @@ def parse_metadata(path):
 
 
 def process_dir(path, node):
+    (Path(OUTPUT_DIR)/path).mkdir()
+
     # Process all files recursively
     for child in path.iterdir():
         name = child.stem
         if child.is_dir():
             if (child/'index.html').exists():
-                # Single iframe -- do not traverse into subfolders
+                # Standalone app -- do not traverse into subfolders
                 print('Iframe: {}'.format(child))
 
                 node[name] = {
@@ -85,6 +87,8 @@ def process_dir(path, node):
                 }
                 node[name].update(ACTION_TABLE['index.html'])
                 node[name].update(parse_metadata(child/'index.html'))
+
+                copytree(child, Path(OUTPUT_DIR)/child)
             else:
                 # Subdirectory
                 print('Folder: {}'.format(child))
@@ -105,11 +109,13 @@ def process_dir(path, node):
 
             node[name] = {
                 'name': name,
-                'file': '/'+str(child),
+                'file': '/'+str(child.with_suffix('')) if child.suffix == '.html' else '/'+str(child),
                 'path': '/'+str(child.relative_to(CONTENT_DIR).with_suffix(''))
             }
             node[name].update(ACTION_TABLE[child.suffix])
             node[name].update(parse_metadata(child))
+
+            copy2(child, Path(OUTPUT_DIR)/child)
         else:
             continue
 
@@ -122,19 +128,21 @@ def process_dir(path, node):
             output['startup'][node[name]['startup']] = node[name]['path']
 
 
-process_dir(Path(CONTENT_DIR), output['file'])
-output['link'] = [v for k, v in sorted(output['link'].items())]
-output['startup'] = [v for k, v in sorted(output['startup'].items())]
-
-# Copy necessary files
+# Cleanup & copy necessary files
 rmtree(Path(OUTPUT_DIR), ignore_errors=True)
 Path(OUTPUT_DIR).mkdir()
 copytree(Path(CTOS_DIR)/'ctos', Path(OUTPUT_DIR)/'ctos')
 copy2(Path(CTOS_DIR)/'index.html', Path(OUTPUT_DIR))
 # copy2(Path(CTOS_DIR)/'counter.js', 'functions')
 
-# Copy content files
-copytree(Path(CONTENT_DIR), Path(OUTPUT_DIR)/CONTENT_DIR)
+# Build
+process_dir(Path(CONTENT_DIR), output['file'])
+output['link'] = [v for k, v in sorted(output['link'].items())]
+output['startup'] = [v for k, v in sorted(output['startup'].items())]
+
+# Dump config file
+with open(Path(OUTPUT_DIR)/'init.json', 'w') as f:
+    f.write(json.dumps(output, ensure_ascii=False, sort_keys=True))
 
 # Copy extra files
 for path in EXTRA_COPIES:
@@ -144,7 +152,3 @@ for path in EXTRA_COPIES:
     else:
         print('Copy: {}'.format(path))
         copy2(path, Path(OUTPUT_DIR))
-
-# Dump config file
-with open(Path(OUTPUT_DIR)/'init.json', 'w') as f:
-    f.write(json.dumps(output, ensure_ascii=False, sort_keys=True))

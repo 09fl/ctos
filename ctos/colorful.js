@@ -77,9 +77,7 @@ function createWindow(title, styles) {
     // Initialize window id
     const divWindow = template.content.querySelector('.window');
     divWindow.id = `w${parseInt(Math.random() * 1e6)}`;
-    for (const s of styles) {
-        divWindow.classList.add(s);
-    }
+    divWindow.classList.add(...styles);
     divWindow.style.zIndex = document.querySelectorAll('.window').length + 1;
     divWindow.addEventListener('mousedown', (ev) => {
         putWindowOnTop(divWindow);
@@ -179,6 +177,16 @@ async function execute(action) {
             const response = await fetch(action.file);
             const template = document.createElement('template');
             template.innerHTML = await response.text();
+            const scripts = template.content.querySelectorAll('script');
+            for (const src of scripts) {
+                src.remove();
+                const newsrc = document.createElement('script');
+                if (src.hasAttribute('src')) {
+                    newsrc.src = src.src;
+                }
+                newsrc.innerHTML = src.innerHTML;
+                template.content.appendChild(newsrc);
+            }
             newContent.appendChild(template.content);
             break;
         }
@@ -215,7 +223,15 @@ async function execute(action) {
             // JS script inject
             const script = document.createElement('script');
             script.setAttribute('src', action.file);
-            window.root = newContent;
+            script.addEventListener('load', () => {
+                // Bind main() to a new global function
+                const funcHandler = `f${parseInt(Math.random() * 1e6)}`;
+                window[funcHandler] = window['main'].bind(newWindow);
+                window['main'] = 0;
+                const loader = document.createElement('script');
+                loader.innerHTML = `${funcHandler}();`;
+                newWindow.appendChild(loader);
+            });
             newWindow.appendChild(script);
             break;
         }
