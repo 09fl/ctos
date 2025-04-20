@@ -1,5 +1,3 @@
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked@14.0.0/+esm';
-
 // Create DOM tree for empty desktop
 function prepareDom() {
     const template = document.createElement('template');
@@ -172,7 +170,7 @@ async function execute(action) {
     }
     const newContent = newWindow.children[1];
     switch (action.type) {
-        case 'url': {
+        case 'html': {
             // External html
             const response = await fetch(action.file);
             const template = document.createElement('template');
@@ -216,14 +214,6 @@ async function execute(action) {
                 semaphore++;
                 loader();
             }
-            break;
-        }
-        case 'md': {
-            // External markdown
-            const response = await fetch(action.file);
-            const template = document.createElement('template');
-            template.innerHTML = marked.parse(await response.text());
-            newContent.appendChild(template.content);
             break;
         }
         case 'folder': {
