@@ -28,11 +28,6 @@ ACTION_TABLE = {
         'icon': 'exe',
         'style': 'large'
     },
-    '.js': {
-        'type': 'js',
-        'icon': 'exe',
-        'style': 'medium'
-    },
 }
 output = {
     'file': {},
