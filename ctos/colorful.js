@@ -176,44 +176,21 @@ async function execute(action) {
             const template = document.createElement('template');
             template.innerHTML = await response.text();
             // Load JS scripts
-            let semaphore = 0;
-            function loader() {
-                semaphore--;
-                if (semaphore == 0) {
-                    if (typeof window['main'] !== 'function') {
-                        console.log('main() not defined!');
-                        return;
-                    }
-                    // Bind main() to a new global function
-                    const func = window.main;
-                    window.main = 0;
-                    const funcHandler = `f${parseInt(Math.random() * 1e6)}`;
-                    window[funcHandler] = () => { func(newWindow); };
-                    const trigger = document.createElement('script');
-                    trigger.innerHTML = `${funcHandler}();`;
-                    newWindow.appendChild(trigger);
-                }
-            }
-            let hasInline = false;
             for (const script of template.content.querySelectorAll('script')) {
                 script.remove();
                 const scriptNew = document.createElement('script');
+                scriptNew.type = 'module';
+                // Process inline script only
                 if (script.hasAttribute('src')) {
-                    scriptNew.src = script.src;
-                    scriptNew.addEventListener('load', loader);
-                    semaphore++;
-                } else {
-                    scriptNew.innerHTML = script.innerHTML;
-                    hasInline = true;
+                    console.log(`script ${script.getAttribute('src')} ignored`);
                 }
-                template.content.appendChild(scriptNew);
+                else {
+                    scriptNew.innerHTML = script.innerHTML;
+                    scriptNew.innerHTML += `main(document.getElementById('${newWindow.id}'));`;
+                    template.content.appendChild(scriptNew);
+                }
             }
             newContent.appendChild(template.content);
-            // Trigger inline scripts, if exist
-            if (hasInline) {
-                semaphore++;
-                loader();
-            }
             break;
         }
         case 'folder': {
