@@ -172,7 +172,7 @@ async function execute(action) {
     switch (action.type) {
         case 'html': {
             // External html
-            const response = await fetch(action.path);
+            const response = await fetch(`${action.path}.html`);
             const template = document.createElement('template');
             template.innerHTML = await response.text();
             // Load JS scripts
@@ -209,7 +209,7 @@ async function execute(action) {
         case 'iframe': {
             // Standalone app
             const iframe = document.createElement('iframe');
-            iframe.setAttribute('src', action.path);
+            iframe.setAttribute('src', `${action.path}/index.html`);
             iframe.setAttribute('scrolling', 'no');
             newContent.appendChild(iframe);
             break;
@@ -315,4 +315,4 @@ async function loadCounter(counterUrl) {
 
 prepareDom();
 loadDesktop('/init.json');
-loadCounter('/counter');
+loadCounter('/api/counter');

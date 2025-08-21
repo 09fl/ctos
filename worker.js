@@ -7,8 +7,9 @@ function hash16(str) {
     return hash & 65535;
 }
 
-export async function onRequestGet(context) {
-    const KV_counter = context.env.KV_counter;
+// GET /api/counter
+async function GetCounter(request, env) {
+    const KV_counter = env.KV_counter;
     if (!KV_counter) {
         return new Response('???????');
     }
@@ -16,8 +17,7 @@ export async function onRequestGet(context) {
     if (current == null) {
         current = 0;
     }
-    const headers = context.request.headers;
-    const clientHash = headers.has('CF-Connecting-IP') ? hash16(headers.get('CF-Connecting-IP')) : 0;
+    const clientHash = hash16(request.headers.get('CF-Connecting-IP') || 0);
     let lastAccess = await KV_counter.get(clientHash);
     if (lastAccess == null) {
         lastAccess = 0;
@@ -30,3 +30,23 @@ export async function onRequestGet(context) {
     }
     return new Response(String(current).padStart(7, '0'));
 }
+
+
+const ROUTES = {
+    GET: {
+        counter: GetCounter
+    },
+    POST: {
+    }
+}
+
+export default {
+    async fetch(request, env, ctx) {
+        const route = new URL(request.url).pathname.split('/')[2];
+        if (ROUTES[request.method] && ROUTES[request.method][route]) {
+            return ROUTES[request.method][route](request, env);
+        }
+
+        return new Response('Not Found', { status: 404 });
+    }
+};

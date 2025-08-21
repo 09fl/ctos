@@ -1,3 +1,7 @@
+# Build results
+public/
+.wrangler/
+
 # Logs
 logs
 *.log

@@ -112,7 +112,7 @@ async function processDirectory(currPath, currNode, extra) {
 
             currNode[name] = {
                 name: name,
-                path: `/${path.format({ ...path.parse(relativePath), base: null, ext: 'html' })}`,
+                path: `/${path.format({ ...path.parse(relativePath), base: null, ext: null })}`,
                 ...DEFAULT_METADATA.html,
                 ...await parseMetadata(direntPath),
             }
@@ -132,11 +132,11 @@ async function processDirectory(currPath, currNode, extra) {
         // Add link and startup
         if (currNode[name] && currNode[name].link) {
             console.log(`Link: ${currNode[name].path}`);
-            extra.link[currNode[name].link] = currNode[name].path.split('.')[0];
+            extra.link[currNode[name].link] = currNode[name].path;
         }
         if (currNode[name] && currNode[name].startup) {
             console.log(`Startup: ${currNode[name].path}`);
-            extra.startup[currNode[name].startup] = currNode[name].path.split('.')[0];
+            extra.startup[currNode[name].startup] = currNode[name].path;
         }
     };
 }
@@ -164,8 +164,8 @@ async function processAll() {
 // Cleanup & copy necessary files
 fs.rmSync(path.resolve(OUTPUT_DIR), { force: true, recursive: true });
 fs.mkdirSync(path.resolve(OUTPUT_DIR));
-fs.cpSync(path.resolve('ctos/ctos'), path.resolve(OUTPUT_DIR, 'ctos'), { recursive: true });
-fs.copyFileSync(path.resolve('ctos/index.html'), path.resolve(OUTPUT_DIR, 'index.html'));
+fs.cpSync(path.resolve('ctos'), path.resolve(OUTPUT_DIR, 'ctos'), { recursive: true });
+fs.copyFileSync(path.resolve('index.html'), path.resolve(OUTPUT_DIR, 'index.html'));
 for (const file of EXTRA_COPIES) {
     console.log(`Copy: ${file}`);
     fs.cpSync(path.resolve(file), path.resolve(OUTPUT_DIR, file), { recursive: true });

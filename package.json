@@ -4,7 +4,9 @@
     "build": "node build.js"
   },
   "dependencies": {
-    "marked": "^16.2.0",
+    "marked": "^16.2.0"
+  },
+  "devDependencies": {
     "wrangler": "^4.31.0"
   }
 }
