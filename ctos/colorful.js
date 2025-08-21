@@ -24,7 +24,7 @@ function prepareDom() {
         span.textContent = startLogo[i];
         template.content.querySelector('.start').appendChild(span);
     }
-    template.content.querySelector('.start').addEventListener('click', (ev) => {
+    template.content.querySelector('.start').addEventListener('click', () => {
         const startMenu = document.querySelector('.menu');
         if (!startMenu.style.display || startMenu.style.display == 'none') {
             startMenu.style.display = 'grid';
@@ -77,7 +77,7 @@ function createWindow(title, styles) {
     divWindow.id = `w${parseInt(Math.random() * 1e6)}`;
     divWindow.classList.add(...styles);
     divWindow.style.zIndex = document.querySelectorAll('.window').length + 1;
-    divWindow.addEventListener('mousedown', (ev) => {
+    divWindow.addEventListener('mousedown', () => {
         putWindowOnTop(divWindow);
     });
 
@@ -95,7 +95,7 @@ function createWindow(title, styles) {
         divTitle.setPointerCapture(ev.pointerId);
         divTitle.addEventListener('pointermove', dragFn);
     });
-    divTitle.addEventListener('pointerup', (ev) => {
+    divTitle.addEventListener('pointerup', () => {
         if (divWindow.classList.contains('maximized')) {
             return;
         }
@@ -118,12 +118,12 @@ function createWindow(title, styles) {
             history.replaceState(null, '', '/');
         }
     }
-    template.content.querySelector('.minimize').addEventListener('click', (ev) => {
+    template.content.querySelector('.minimize').addEventListener('click', () => {
         document.getElementById(`t${divWindow.id.slice(1)}`).classList.remove('active');
         divWindow.style.display = 'none';
         updatePath();
     });
-    function maximizeFn(ev) {
+    function maximizeFn() {
         if (divWindow.classList.contains('maximized')) {
             divWindow.classList.remove('maximized');
         } else {
@@ -132,7 +132,7 @@ function createWindow(title, styles) {
     }
     template.content.querySelector('.maximize').addEventListener('click', maximizeFn);
     divTitle.addEventListener('dblclick', maximizeFn);
-    template.content.querySelector('.close').addEventListener('click', (ev) => {
+    template.content.querySelector('.close').addEventListener('click', () => {
         document.getElementById(`t${divWindow.id.slice(1)}`).remove();
         divWindow.remove();
         updatePath();
@@ -147,7 +147,7 @@ function createWindow(title, styles) {
     divTask.id = `t${divWindow.id.slice(1)}`;
     divTask.classList.add('task');
     divTask.textContent = title;
-    divTask.addEventListener('click', (ev) => {
+    divTask.addEventListener('click', () => {
         divWindow.style.display = 'grid';
         putWindowOnTop(divWindow);
     });
@@ -172,7 +172,7 @@ async function execute(action) {
     switch (action.type) {
         case 'html': {
             // External html
-            const response = await fetch(action.file);
+            const response = await fetch(action.path);
             const template = document.createElement('template');
             template.innerHTML = await response.text();
             // Load JS scripts
@@ -200,8 +200,8 @@ async function execute(action) {
             <div class="folder-meta"><span>${action.name}</span><span>${action.path}</span></div>
             <div class="folder-desc">${action.desc || ''}</div>
             <div class="folder"></div>`;
-            for (const child in action.file) {
-                template.content.querySelector('.folder').appendChild(createIcon(action.file[child]));
+            for (const child in action.contents) {
+                template.content.querySelector('.folder').appendChild(createIcon(action.contents[child]));
             }
             newContent.appendChild(template.content);
             break;
@@ -209,7 +209,7 @@ async function execute(action) {
         case 'iframe': {
             // Standalone app
             const iframe = document.createElement('iframe');
-            iframe.setAttribute('src', action.file);
+            iframe.setAttribute('src', action.path);
             iframe.setAttribute('scrolling', 'no');
             newContent.appendChild(iframe);
             break;
@@ -227,7 +227,7 @@ function createEntry(action) {
     divEntry.classList.add('entry');
     divEntry.textContent = action.name;
     if (action.type) {
-        divEntry.addEventListener('click', (ev) => {
+        divEntry.addEventListener('click', () => {
             execute(action);
         });
     }
@@ -246,7 +246,7 @@ function createIcon(action) {
     </div>`;
 
     if (action.type) {
-        template.content.querySelector('.icon').addEventListener('click', (ev) => {
+        template.content.querySelector('.icon').addEventListener('click', () => {
             execute(action);
         });
     }
@@ -263,7 +263,7 @@ function searchByPath(root, path) {
         }
         if (typeof curr === 'object' && part in curr) {
             result = curr[part];
-            curr = curr[part].file;
+            curr = curr[part].contents;
         } else {
             return null;
         }
@@ -277,17 +277,17 @@ async function loadDesktop(configUrl) {
     const config = await response.json();
 
     // Initialize desktop icons and start menu entries
-    for (const key in config.file) {
-        document.querySelector('.desktop').appendChild(createIcon(config.file[key]));
+    for (const key in config.fs) {
+        document.querySelector('.desktop').appendChild(createIcon(config.fs[key]));
     }
     for (const path of config.link) {
-        createEntry(searchByPath(config.file, path));
+        createEntry(searchByPath(config.fs, path));
     }
 
     // Start the action by path or predefined startups
     const pathName = decodeURI(location.pathname);
     if (pathName.replaceAll('/', '') != '') {
-        const action = searchByPath(config.file, pathName);
+        const action = searchByPath(config.fs, pathName);
         if (action) {
             execute(action);
         } else {
@@ -295,7 +295,7 @@ async function loadDesktop(configUrl) {
         }
     } else {
         for (const path of config.startup) {
-            execute(searchByPath(config.file, path));
+            execute(searchByPath(config.fs, path));
         }
     }
 }
