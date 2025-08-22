@@ -237,10 +237,11 @@ function createEntry(action) {
 // Create an icon on desktop
 function createIcon(action) {
     const template = document.createElement('template');
+    const iconUrl = action.icon.includes('.') ? action.icon : `/ctos/icon/${action.icon}.png`;
     template.innerHTML = `
     <div class="iconwrap">
         <div class="icon">
-            <img src="/ctos/icon/${action.icon}.png" alt="${action.icon}">
+            <img src="${iconUrl}" alt="${action.icon}">
             <div class="tag">${action.name}</div>
         </div>
     </div>`;
