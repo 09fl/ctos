@@ -1,4 +1,5 @@
 {
+  "name": "ctos",
   "type": "module",
   "scripts": {
     "build": "node build.js"
@@ -7,6 +8,6 @@
     "marked": "^16.2.0"
   },
   "devDependencies": {
-    "wrangler": "^4.31.0"
+    "wrangler": "^4.33.0"
   }
 }

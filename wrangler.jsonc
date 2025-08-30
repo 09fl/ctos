@@ -4,12 +4,10 @@
     "compatibility_flags": [
         "nodejs_compat"
     ],
-    "main": "worker.js",
+    "main": "workers/main.js",
     "build": {
         "command": "npm run build",
-        "watch_dir": [
-            "content"
-        ]
+        "watch_dir": []
     },
     "assets": {
         "directory": "public/",
@@ -20,10 +18,14 @@
         "html_handling": "none",
         "not_found_handling": "single-page-application"
     },
-    "kv_namespaces": [
+    "observability": {
+        "enabled": true
+    },
+    "d1_databases": [
         {
-            "binding": "KV_counter",
-            "id": ""
+            "binding": "DB_counter",
+            "database_name": "counter",
+            "database_id": ""
         }
     ]
 }
